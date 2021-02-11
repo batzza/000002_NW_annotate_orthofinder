@@ -30,23 +30,29 @@ All OrthoFinder results will be accessed remotely from the original run director
 ## Pipeline
 
 ### Setup Project Directory
+```bash
 python start_new_project.py NW annotate orthogroups
+```
 
 ### Initiate Conda Env
+```bash
 conda create -n 000002_NW
 conda activate 000002_NW
+```
 
 ### Install Necessary Modules
 TBD
 
 ### Setup Git Repo
+```bash
 git init
 git add scripts/
 git add readme.md
-git commit
+git commit -m "Subject: Abc" -m "Body: xyz"
 git remote add origin https://github.com/batzza/000002_NW_annotate_orthofinder.git
 git branch -M main
 git push -u origin main
+```
 
 ### Step 000 > 010
 First we will need to get the appropriate reference sequences, maybe from RefSeq or from Ensembl?
