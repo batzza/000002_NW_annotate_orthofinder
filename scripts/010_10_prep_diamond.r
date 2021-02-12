@@ -11,6 +11,7 @@ spec <- matrix(c(
   'out_dir','o',1,'character','directory where fastas with ensembl genes will go',
   'hit_dir','d',1,'character','directory where the diamond hits will go',
   'threads','t',0,'integer','number of threads to request for diamond swarms (default = 2)',
+  'force','f',0,  'logical','By default, this program will skip creating any fasta files that already exist. Use -f to force them to be regenerated',
   'help','h',0,  'logical','show this help message'
 ), byrow=TRUE, ncol=5);
 
@@ -52,7 +53,13 @@ anno_list <- c()
 
 
 for (sp in sp_list$ensembl_name){
+  ## Check if file exists already
+  fname <- sprintf("/v%s_%s_longest_gene.fasta", version, sp)
+  outname <- paste0(outdir_qs,fname)
   
+  ## Only attempt to query ensembl if the fasta file does not exist or the user has included the --force option
+  if ((!file.exists(outname)) || ((!file.exists(outname)) && opt$force == TRUE)){
+    
   ## Prepare ensembl to query the current species
   dset <- paste0(sp, "_gene_ensembl")
   ensembl <- useDataset(dataset = dset, mart = ensembl)
@@ -82,25 +89,29 @@ for (sp in sp_list$ensembl_name){
   fname <- sprintf("/v%s_%s_longest_gene.fasta", version, sp)
   outname <- paste0(outdir_qs,fname)
   exportFASTA(out_seqs,outname)
+  }
+  
   anno_list <- c(anno_list, fname)
 }
 
 
 
 anno_tbl <- tibble(genus_species = sp_list$genus_species, anno_list)
-anno_tbl$index_db <- sprintf("diamond makedb --in ../data/000_raw/%s.fasta --db %s/%s.db --threads %i", anno_tbl$genus_species, outdir_db, anno_tbl$genus_species, opt$threads)
-anno_tbl$diamond_run <- sprintf("diamond blastp --db %s/%s.db --query %s/%s.fasta --mid-sensitive --max-target-seqs 1 --unal 0 --threads %i --out %s/%s_top_hits.txt", outdir_db, anno_tbl$genus_species, outdir_qs, anno_tbl$anno_list, opt$threads, opt$hit_dir, anno_tbl$genus_species)
+anno_tbl$index_db <- sprintf("diamond makedb --in ../data/000_raw/OrthoFinder_input/%s.fasta --db %s%s.db --threads %i", anno_tbl$genus_species, outdir_db, anno_tbl$genus_species, opt$threads)
+anno_tbl$diamond_run <- sprintf("diamond blastp --db %s%s.db --query %s%s --mid-sensitive --max-target-seqs 1 --unal 0 --threads %i --out %s/%s_top_hits.txt", outdir_db, anno_tbl$genus_species, outdir_qs, anno_tbl$anno_list, opt$threads, opt$hit_dir, anno_tbl$genus_species)
+
+## Write submission bash script
+outname_submit <- "020_05_run_diamond.sh"
 
 ## Write swarm file to make indexes for Diamond
-outname_db <- "make_indexes.swarm"
+outname_db <- "020_10_make_indexes.swarm"
 write.table(anno_tbl$index_db, outname_db, row.names=FALSE,col.names=FALSE,sep="\t", quote = FALSE)
 
 ## Write swarm of jobs to run Diamond search
-outname_search <- "run_diamond.swarm"
+outname_search <- "020_15_run_diamond.swarm"
 write.table(anno_tbl$diamond_run, outname_search, row.names=FALSE,col.names=FALSE,sep="\t", quote = FALSE)
 
-## Write submission bash script
-outname_submit <- "run_diamond.sh"
+
 
 
 ## This section writes a swarm submission where the second job is automatically submitted after the first job is completed
