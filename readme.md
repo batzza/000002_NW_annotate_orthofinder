@@ -27,6 +27,11 @@ All files were then renamed for OrthoFinder as Genus_species.fasta then run thro
 Because of the massive number of files produced by OrthoFinder, the data/000_raw folder for this project will not include the OrthoFinder output.
 All OrthoFinder results will be accessed remotely from the original run directory: /data/VisionEvo/OrthoFinder/concat_unigene_108/OrthoFinder/Results_Feb04/
 
+Two files in the 000_raw directory are key for connecting OrthoFinder input to out:
+- SpeciesIDs.txt converts the species name to a number used to refer to that species in OrthoFinder
+- SequenceIDs.txt converts each sequence from a TRINITY_DNXXX_* name to an OrthoFinder name [SP#]_[seq#]
+These sequences were copied from the output folder used to prep for diamond runs located: /data/VisionEvo/OrthoFinder/concat_unigene_108/OrthoFinder/Results_Feb03/WorkingDirectory/ on Feb 12 2021
+
 ## Pipeline
 
 ### Setup Project Directory
@@ -76,10 +81,48 @@ sbatch 010_05_submit_diamond_prep.sh
 ```
 
 ### Step 010 > 020
-This makes one diamond database per species. The source of the diamond database is the input file that was used for orthofinder (drawn from a copy stored in the 000_raw folder).
-Next, the script runs a swarm of diamond blastp searches using the genes pulled from ensembl in the previous step as the query.
-Each query is run against the appropriate species db. For example, the longest transcript for each requested gene from Xenopus tropicalis is queried against the list of X. tropicalis sequences used by Orthofinder.
-Both of these swarm scripts are submitted via a bash script that includes a dependency so after all indexes are made, the blastp swarm gets automatically submitted
+- This makes one diamond database per species. The source of the diamond database is the input file that was used for orthofinder (drawn from a copy stored in the 000_raw folder).
+- Next, the script runs a swarm of diamond blastp searches using the genes pulled from ensembl in the previous step as the query.
+- Each query is run against the appropriate species db. 
+	- For example, the longest transcript for each requested gene from Xenopus tropicalis is queried against the list of X. tropicalis sequences used by Orthofinder.
+- Both of these swarm scripts are submitted via a bash script that includes a dependency so after all indexes are made, the blastp swarm gets automatically submitted
 ```bash
 sbatch 020_05_run_diamond.sh
+```
+
+### Step 020 > 030
+- This step looks through the diamond best hit results and ultimately creates 4 summary files
+
+- File 1 -- one csv file for each gene containing the following info:
+	- Ref_species: the species the annotated reference sequence came from
+	- Ref_group: The group that species belongs to
+	- Trinity_id: the name of the best hit sequence (this is the name used as input for OrthoFinder)
+	- Aln_pct: percent alignment between ensembl reference sequence and the best hit
+	- Aln_len: Length of the alignment between ensembl reference sequence and the best hit
+	- Eval: Evalue of the alignment between ensembl reference sequence and the best hit
+	- Bitscore: Bitscore of the alingment bbetween ensembl reference sequence and the best hit
+	- OrthoFinder_seq: The orthofinder alias for the best hit sequence
+	- Orthogroup: The ID of the orthogroup containing the best hit sequence
+
+- File 2 -- one csv summary file containing the following:
+	- Gene: name of the gene
+	- Orthogroup: Each unique orthogroup identified containing the best hit for this gene in at least one reference species
+	- N_agree: number of species where the best hit for this gene was in this particular orthogroup
+	- Pct_agree: Percent of total species (which contain this gene on Ensembl) where the best hit was in this particular orthogroup
+
+- File 3 - one csv summary file containing the following:
+	- Gene:	name of	the gene
+        - Orthogroup: Each unique orthogroup identified	containing the best hit	for this gene in at least one reference	species
+	- Orthogroup_seqs: Number of unique sequences in this orthogroup (including species NOT in Ensembl group)
+	- Orthogroup_species: Number of unique species in this orthogroup (including species NOT in Ensembl group)
+	- [GROUP]_species: Number of unique species from each species subgroup found in this orthogroup (e.g., Fish, Birds, Lizards, etc)
+
+- File 4 -- One summary csv file containing the following:
+	- Gene: The gene name
+	- TopOG: The most frequently observed orthogroup containing the best hit for reference sequences of this gene
+
+Run with:
+
+```bash
+tbd
 ```
