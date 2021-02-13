@@ -1,8 +1,8 @@
 ## Libraries used
 from argparse import ArgumentParser
-import csv
 import os
 import re
+import csv
 import pathlib
 from glob import glob
 from collections import defaultdict
@@ -67,7 +67,7 @@ args = parser.parse_args()
 ## Key is species name (Genus)_(species); value is number in OF
 species_group_dict = {}
 
-## Read in species id info
+## Read in group info
 with open(args.group_info) as f:
 	reader = csv.reader(f)
 	for line in reader:
@@ -98,7 +98,7 @@ with open(args.sequenceIDs) as f:
 		seqID = line.split(':')[0]
 		seqName = line.split(':')[1]
 		seqName = seqName[1:]
-		species_id_dict[seqName] = seqID
+		sequence_id_dict[seqName.strip()] = seqID
 
 print("Sequence IDs processed.")
 
@@ -107,32 +107,40 @@ print("Sequence IDs processed.")
 ## Key is sequence ID alias, value is orthogroup
 og_dict = {}
 with open(args.orthogroups) as f:
-
+	n=0
+	ignoreFlag = 1
 	for l in f:
-		while line.strip() != "begin":
-			pass
+		if ignoreFlag == 1:
+			if l.startswith("begin"):
+				ignoreFlag = 0
 
-		lclean = l.strip()
-		line = lclean.split(" ")
-
-		if lclean[0].isdigit():
-			curr_og = line[0]
-			hits = line[1:]
-			
 		else:
-			hits = line
+			n+=1
+			if n % 500000 == 0:
+				print("%s clusters lines read..." % n)
+			lclean = l.strip()
+			line = lclean.split(" ")
+			
 
-		for seq in hits:
-			if seq != "$":
-				og_dict[seq]=curr_og
+			if l[0].isdigit():
+				curr_og = line[0]
+				hits = line[1:]
+				
+			else:
+				hits = line
+
+			for seq in hits:
+				if seq != "$" and len(seq)>1:
+					og_dict[seq]=curr_og
+
 
 print("Orthogroup members processed.")
 
 ## Find all the diamond top hit files
-hit_files = glob(args.in_dir+"*.top_hits.txt")
+hit_files = glob(args.in_dir+"*_top_hits.txt")
 
 ## Dictionary where the key is the gene and the results are a list of top hits for that gene (including the alignment stats)
-alignment_dict = default(list)
+alignment_dict = defaultdict(list)
 
 for h in hit_files:
 	print("Processing %s." % h)
@@ -142,7 +150,6 @@ for h in hit_files:
 	try:
 		curr_grp = species_group_dict[curr_sp]
 	except KeyError:
-		print("!! Missing species: %s" % curr_sp)
 		curr_grp = "NA"
 
 	with open(h) as f:
@@ -167,8 +174,10 @@ for h in hit_files:
 			alignment_dict[gene].append(hit_deets)
 
 print("Writing results file.")
+
 for k in alignment_dict.keys():
-	outfile = paste0(args.out_dir,k,".csv")
+	outfile = args.out_dir+'/'+k+".csv"
+	print(outfile)
 	with open(outfile,'w') as f:
 		result_list = alignment_dict[k]
 
