@@ -232,7 +232,7 @@ for og in all_ogs:
 					species_seen_by_group[group] += 1
 
 	## Reformat for output
-	curr_out_line.extend([gene, og_id, str(total_seqs), str(len(libs_seen)),str(len(species_seen))])
+	curr_out_line.extend([gene, og_id, str(total_seqs), str(len(species_seen)),str(len(libs_seen))])
 
 	for k in sorted(species_seen_by_group.keys()):
 		curr_out_line.append(str(species_seen_by_group[k]))
@@ -255,3 +255,4 @@ with open(out_file,'w') as f:
 
 	writer.writerow(headers)
 	writer.writerows(out_lines)
+
