@@ -154,6 +154,7 @@ for h in hit_files:
 
 	with open(h) as f:
 		for l in f:
+
 			lclean = l.strip()
 			line = lclean.split('\t')
 			gene = line[0]
@@ -162,6 +163,7 @@ for h in hit_files:
 
 			hit_deets.append(line[1])
 			hit_deets.append(line[2])
+			hit_deets.append(line[3])
 			hit_deets.append(line[10])
 			hit_deets.append(line[11])
 
@@ -171,12 +173,31 @@ for h in hit_files:
 			og_id = og_dict[of_id]
 			hit_deets.append(og_id)
 
-			alignment_dict[gene].append(hit_deets)
+			## Feb 16 2021 -- there is something a little strange about the results
+			## search results from Diamond are duplicated 2-3x times in most _top_hits.txt files
+			## The results are exactly identical so I think somehow the files just got appended instead of overwritten at some point?
+			## The end result is that the same results get printed multiple times to the output CSV files
+			## Not the end of the world but a little annoying
+			## Rather than re-run the diamond searches, I am adding a test to check if the result list already exists in the dictionary entry for the current gene
+
+			## Check if the list already exists
+			## If the key exists and the current hit detail list is already a stored value, pass
+			## If the key exists but the current hit detail list is NOT already stored, store it
+			## If the key does not exists, store the key and the value
+			try:
+				if hit_deets in alignment_dict[gene]: 
+					pass
+				else: 
+					alignment_dict[gene].append(hit_deets)
+
+			except KeyError:
+				alignment_dict[gene].append(hit_deets)
+
 
 print("Writing results file.")
-
+print(alignment_dict.keys())
 for k in alignment_dict.keys():
-	outfile = args.out_dir+'/'+k+".csv"
+	outfile = args.out_dir + '/' + k + ".csv"
 	print(outfile)
 	with open(outfile,'w') as f:
 		result_list = alignment_dict[k]
