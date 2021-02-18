@@ -67,8 +67,6 @@ with open(args.group_info) as f:
 		lib_to_species[line[2]]=line[0]
 		lib_to_group[line[2]]=line[1]
 
-print("Species groups processed.")
-
 
 
 ## Get all gene-wise csv summary files

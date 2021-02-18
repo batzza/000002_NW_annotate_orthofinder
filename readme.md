@@ -91,9 +91,9 @@ sbatch 020_05_run_diamond.sh
 ```
 
 ### Step 020 > 030
-- This step looks through the diamond best hit results and ultimately creates 4 summary files
+- This step looks through the diamond best hit results, moving OGs of interest to the output directory, and creating a set of summary files to understand the orthogroups:
 
-- File 1 -- one csv file for each gene containing the following info:
+- by_gene/[GENE].csv -- one csv file for each gene containing the following info:
 	- Ref_species: the species the annotated reference sequence came from
 	- Ref_group: The group that species belongs to
 	- Trinity_id: the name of the best hit sequence (this is the name used as input for OrthoFinder)
@@ -104,25 +104,27 @@ sbatch 020_05_run_diamond.sh
 	- OrthoFinder_seq: The orthofinder alias for the best hit sequence
 	- Orthogroup: The ID of the orthogroup containing the best hit sequence
 
-- File 2 -- one csv summary file containing the following:
+- Orthogroup_agreement_summary.csv -- one csv summary file containing the following:
 	- Gene: name of the gene
 	- Orthogroup: Each unique orthogroup identified containing the best hit for this gene in at least one reference species
 	- N_agree: number of species where the best hit for this gene was in this particular orthogroup
 	- Pct_agree: Percent of total species (which contain this gene on Ensembl) where the best hit was in this particular orthogroup
 
-- File 3 - one csv summary file containing the following:
+- Orthogroup_richness.csv - one csv summary file containing the following:
 	- Gene:	name of	the gene
         - Orthogroup: Each unique orthogroup identified	containing the best hit	for this gene in at least one reference	species
-	- Orthogroup_seqs: Number of unique sequences in this orthogroup (including species NOT in Ensembl group)
-	- Orthogroup_species: Number of unique species in this orthogroup (including species NOT in Ensembl group)
+	- Total_sequences: Number of unique sequences in this orthogroup (including species NOT in Ensembl)
+	- Unique_species: How many unique species in this orthogroup (including species NOT in Ensembl)
+	- Unique Libraries: How many unique libraries in this orthogroup
 	- [GROUP]_species: Number of unique species from each species subgroup found in this orthogroup (e.g., Fish, Birds, Lizards, etc)
+	- [GROUP]_libraries: Number of unique libraries from each species subgroup found in this orthogroup
 
-- File 4 -- One summary csv file containing the following:
+- Top_orthogroup.csv -- One summary csv file containing the following:
 	- Gene: The gene name
 	- TopOG: The most frequently observed orthogroup containing the best hit for reference sequences of this gene
 
 Run with:
 
 ```bash
-tbd
+sbatch --mem=20g 030_05_parse_results.sh
 ```
